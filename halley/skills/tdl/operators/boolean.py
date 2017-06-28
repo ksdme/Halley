@@ -2,7 +2,7 @@
 
 from halley.skills.tdl.utils import PropMap, Constants, Token
 from halley.skills.tdl.operator import OPERATOR, Descriptor
-from halley.skills.tdl.operator import resolveParameterMagAndDirn, Result
+from halley.skills.tdl.operator import Result
 
 class AND(OPERATOR):
 

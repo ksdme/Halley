@@ -35,12 +35,13 @@ class OPERATOR(object):
 
 class Descriptor(PropMap):
 
-	def __init__(self, regex, precedence, label):
+	def __init__(self, regex, precedence, label, **kargs):
 		super(Descriptor, self).__init__(
 			clas=None,
 			regex=regex,
 			label=label,
-			precedence=precedence
+			precedence=precedence,
+			**kargs
 		)
 
 	def setClass(self, clas):
@@ -60,7 +61,7 @@ class Result(PropMap):
 
 		return Result._FALSE
 
-def resolveParameterMagAndDirn(selector, reverseMagSym, paramText):
+def resolveBinaryParameterMagAndDirn(selector, reverseMagSym, paramText):
 
 	mag, dirn = re.match(selector, paramText), False
 	if mag is None:
@@ -71,3 +72,15 @@ def resolveParameterMagAndDirn(selector, reverseMagSym, paramText):
 	mag  = int(mag[1:] if not dirn else mag)
 
 	return (mag, dirn)
+
+# Supports >, <, ''
+def resolve3WayParameter(selector, paramText):
+	paramText = str(paramText)[1:]
+
+	# less than equal to
+	if paramText.startswith(">"):
+		return lambda num: num > int(paramText[1:])
+	elif paramText.startswith("<"):
+		return lambda num: num < int(paramText[1:])
+	else:
+		return lambda num: num == int(paramText)

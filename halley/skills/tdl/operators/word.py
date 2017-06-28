@@ -3,6 +3,8 @@
 from halley.skills.tdl.utils import PropMap, Constants
 from halley.skills.tdl.operator import OPERATOR, Descriptor, Result
 
+# ?WORD is a simple delimited word,
+# '?' here isn't a operator
 class WORD:
 
 	DELIMITED_WORD_STARTS_WITH = "?"
@@ -44,7 +46,7 @@ class WORD:
 				while len(baseString) != 0:
 					if baseString[0] == originalText[0]:
 						baseString = baseString[1:]
-					
+
 					originalText = originalText[1:]
 					baseIndex += 1
 

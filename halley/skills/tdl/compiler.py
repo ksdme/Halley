@@ -37,9 +37,7 @@ def tokenPreprocessor(token, label):
 def simpleSpaceDelimiter(text):
 	return text.split()
 
-def tokeniseRule(rule, tokenProcess=[Constants.TOKEN_TYPES.WORD], tokenProcessor=tokenPreprocessor):
-	assert isinstance(tokenProcess, list)
-
+def rawTokenStream(rule, tokenProcessor=tokenPreprocessor):
 	while rule != "":
 		for tokenRule in TOKEN_RULES:
 			match = re.match(tokenRule.regex, rule)
@@ -47,8 +45,7 @@ def tokeniseRule(rule, tokenProcess=[Constants.TOKEN_TYPES.WORD], tokenProcessor
 				matchSpan = match.span()
 
 				token = rule[:matchSpan[1]]
-				if tokenRule.label in tokenProcess:
-					token = tokenProcessor(token, tokenRule.label)
+				token = tokenProcessor(token, tokenRule.label)
 
 				yield Token(token, tokenRule)
 				rule = rule[matchSpan[1]:]
@@ -58,7 +55,11 @@ def tokeniseRule(rule, tokenProcess=[Constants.TOKEN_TYPES.WORD], tokenProcessor
 	else:
 		raise StopIteration
 
-# Its a Stack based Expression Parser
+def tokeniseRule(rule, tokenProcessor=tokenPreprocessor):
+	rawTokens = list(rawTokenStream(rule, tokenProcessor))
+	return rawTokens
+
+# Clas is only used after the Postfixing Stage
 def makePostfix(rule):
 	assert isinstance(rule, list)
 
@@ -124,7 +125,7 @@ def defaultCompilerFunc(postfixStack, wordDelimiterFunc):
 
 def ruleCompiler(rule, compiler=defaultCompilerFunc, requiresPostfixExpr=True, defaultDelimiterFunc=simpleSpaceDelimiter):
 	if isinstance(rule, str):
-		rule = list(tokeniseRule(rule))
+		rule = tokeniseRule(rule)
 	
 	if requiresPostfixExpr:
 		rule = makePostfix(rule)
