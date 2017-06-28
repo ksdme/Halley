@@ -1,6 +1,5 @@
 import unittest
 from halley.skills.tdl.compiler import ruleCompiler
-from halley.skills.tdl.utils import testUnitSwitch
 
 class TDLTestCase(unittest.TestCase):
 

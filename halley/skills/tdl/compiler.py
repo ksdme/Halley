@@ -6,8 +6,8 @@ from halley.skills.exception import *
 from halley.skills.tdl.operator import Descriptor
 
 from halley.skills.tdl.operators.word import WORD
-from halley.skills.tdl.operators.count import COUNT_OCCOURANCE
 from halley.skills.tdl.operators.boolean import NOT, AND, OR
+from halley.skills.tdl.operators.count import COUNT_OCCOURANCE
 from halley.skills.tdl.operators.ordering import PRE_OCCOURANCE, POST_OCCOURANCE
 
 import re

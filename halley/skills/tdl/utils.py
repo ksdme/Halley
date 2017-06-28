@@ -43,5 +43,3 @@ class Token(PropMap):
 			label=tokenRule.label,
 			precedence=tokenRule.precedence
 		)
-
-def 
