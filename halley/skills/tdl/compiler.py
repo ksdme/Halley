@@ -3,7 +3,11 @@
 
 from halley.skills.tdl.utils import *
 from halley.skills.exception import *
-from halley.skills.tdl.operator import Descriptor
+from halley.skills.tdl.operator import OpDescriptor
+
+# Don't need it as of now!
+# from halley.skills.tdl.preprocessor import *
+# from halley.skills.tdl.preprocessors.spread import SPREAD
 
 from halley.skills.tdl.operators.word import WORD
 from halley.skills.tdl.operators.boolean import NOT, AND, OR
@@ -13,10 +17,11 @@ from halley.skills.tdl.operators.ordering import PRE_OCCOURANCE, POST_OCCOURANCE
 import re
 
 # Register your operator to this list, 
-# Preferably append its descriptor here	
+# Preferably append its descriptor here
+VALID_INDENTERS = [" ", "\t", "\n"]
 TOKEN_RULES = [
-	Descriptor(r"\(", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.PARTH_OPEN),	# (
-	Descriptor(r"\)", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.PARTH_CLSE),	# )
+	OpDescriptor(r"\(", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.PARTH_OPEN),	# (
+	OpDescriptor(r"\)", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.PARTH_CLSE),	# )
 ]
 
 OR.register(TOKEN_RULES)
@@ -51,7 +56,10 @@ def rawTokenStream(rule, tokenProcessor=tokenPreprocessor):
 				rule = rule[matchSpan[1]:]
 				break
 		else:
-			rule = rule[1:]
+			if rule[0] in VALID_INDENTERS:
+				rule = rule[1:]
+			else:
+				raise RuleCompilation(Messages.UNIDENTIFIED_SYM)
 	else:
 		raise StopIteration
 
@@ -125,6 +133,9 @@ def defaultCompilerFunc(postfixStack, wordDelimiterFunc):
 
 def ruleCompiler(rule, compiler=defaultCompilerFunc, requiresPostfixExpr=True, defaultDelimiterFunc=simpleSpaceDelimiter):
 	if isinstance(rule, str):
+		# pipeline = PreprocessorPipeline()
+		# SPREAD.register(pipeline, spreadMap)
+		# rule = pipeline.do(rule)
 		rule = tokeniseRule(rule)
 	
 	if requiresPostfixExpr:

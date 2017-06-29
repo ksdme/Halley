@@ -1,12 +1,12 @@
 # @author Kilari Teja
 
 from halley.skills.tdl.utils import PropMap, Constants
-from halley.skills.tdl.operator import OPERATOR, Descriptor
+from halley.skills.tdl.operator import OPERATOR, OpDescriptor
 from halley.skills.tdl.operator import resolve3WayParameter, Result
 
 class COUNT_OCCOURANCE(OPERATOR):
 	PARAM_SELECTOR  = r"\:([\>\<]?[0-9]+)"
-	DESCRIPTOR = Descriptor(PARAM_SELECTOR, Constants.PRECEDENCE.HIGH, Constants.TOKEN_TYPES.UNARY_OP)
+	DESCRIPTOR = OpDescriptor(PARAM_SELECTOR, Constants.PRECEDENCE.HIGH, Constants.TOKEN_TYPES.UNARY_OP)
 
 	def __init__(self, selfToken, element):
 		super(COUNT_OCCOURANCE, self).__init__(None, selfToken, None)

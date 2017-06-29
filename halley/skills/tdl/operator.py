@@ -33,10 +33,10 @@ class OPERATOR(object):
 	def eval(self, text):
 		return reduce(self._actn, map(lambda arg: arg.eval(text), self._args))
 
-class Descriptor(PropMap):
+class OpDescriptor(PropMap):
 
 	def __init__(self, regex, precedence, label, **kargs):
-		super(Descriptor, self).__init__(
+		super(OpDescriptor, self).__init__(
 			clas=None,
 			regex=regex,
 			label=label,

@@ -1,7 +1,7 @@
 # @author Kilari Teja
 
 from halley.skills.tdl.utils import PropMap, Constants
-from halley.skills.tdl.operator import OPERATOR, Descriptor, Result
+from halley.skills.tdl.operator import OPERATOR, OpDescriptor, Result
 
 # ?WORD is a simple delimited word,
 # '?' here isn't a operator
@@ -9,9 +9,9 @@ class WORD:
 
 	DELIMITED_WORD_STARTS_WITH = "?"
 	DESCRIPTOR = [
-		Descriptor(r"[\?]?\'[0-9A-Za-z ]+\'", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.WORD),
-		Descriptor(r'[\?]?\"[0-9A-Za-z ]+\"', Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.WORD),
-		Descriptor(r"[\?]?[0-9A-Za-z_]+",	   Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.WORD)
+		OpDescriptor(r"[\?]?\'[0-9A-Za-z ]+\'", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.WORD),
+		OpDescriptor(r'[\?]?\"[0-9A-Za-z ]+\"', Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.WORD),
+		OpDescriptor(r"[\?]?[0-9A-Za-z_]+",	Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.WORD)
 	]
 
 	@classmethod

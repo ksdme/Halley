@@ -45,18 +45,21 @@ class TDLTestCase(unittest.TestCase):
 	TEST_INPUT_5_11 = ("(a|!b|?c):2",	"b",		False)
 	TEST_INPUT_5_12 = ("(a|!b|c):2",	"baa",	True)
 
-	def ruleTest(self, testInput, message=""):
+	# Spread Preprocessor
+	TEST_INPUT_6_0 = ("[&TEST]",	"abc",	True, { "spreadMap": { "TEST": ["a", "b", "c"] } })
 
-		rule = ruleCompiler(testInput[0])
+	def ruleTest(self, testInput, hasPreprocessorArgs=False, message=""):
+
+		rule = ruleCompiler(testInput[0], **(testInput[3] if hasPreprocessorArgs else {}))
 		self.assertEqual(rule.bool(testInput[1]), testInput[2], message)
 
-	def runAlongInputs(self, case):
+	def runAlongInputs(self, case, hasPreprocessorArgs=False):
 		case, lndex = "TEST_INPUT_{0}_{1}".format(case, "{}"), 0
 
 		while True:
 			try:
 				currentCase = case.format(lndex)
-				self.ruleTest(getattr(self, currentCase), "[-] Failed {}".format(currentCase))
+				self.ruleTest(getattr(self, currentCase), hasPreprocessorArgs, "[-] Failed {}".format(currentCase))
 				lndex += 1
 			except AttributeError:
 				break
@@ -77,3 +80,6 @@ class TDLTestCase(unittest.TestCase):
 
 	def test_simple_count_unary_operator(self):
 		self.runAlongInputs(5)
+
+	# def test_preprocessor_spread(self):
+	# 	self.runAlongInputs(6)

@@ -43,3 +43,36 @@ class Token(PropMap):
 			label=tokenRule.label,
 			precedence=tokenRule.precedence
 		)
+
+class Pipeline(object):
+
+	def __init__(self, actions=[]):
+		self.init()
+		self.setUpActions(actions)
+
+	def __call__(self, data):
+		return self.do(data)
+
+	def init(self):
+		self._actions = []
+
+	def setUpActions(self, actions):
+		assert isinstance(actions, list)
+
+		self.init()
+		for action in actions:
+			self.addAction(action)
+
+	def addAction(self, action):
+		if isinstance(action, tuple):
+			self._actions.append(action)
+		else:
+			self._actions.append((action, lambda *args: []))
+
+	def do(self, data):
+		for action in self._actions:
+			data = action[0](data, action[1]())
+
+		return data
+
+	actions = property(lambda self: self._action)

@@ -1,14 +1,14 @@
 # @author Kilari Teja
 
 from halley.skills.tdl.utils import PropMap, Constants, Token
-from halley.skills.tdl.operator import OPERATOR, Descriptor
+from halley.skills.tdl.operator import OPERATOR, OpDescriptor
 from halley.skills.tdl.operator import Result
 
 class AND(OPERATOR):
 
 	DESCRIPTOR = [
-		Descriptor(r"\&", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.OPERATOR),
-		Descriptor(r"\,", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.OPERATOR)
+		OpDescriptor(r"\&", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.OPERATOR),
+		OpDescriptor(r"\,", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.OPERATOR)
 	]
 
 	def __init__(self, selfToken, *args):
@@ -17,7 +17,7 @@ class AND(OPERATOR):
 
 class OR(OPERATOR):
 
-	DESCRIPTOR = Descriptor(r"\|", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.OPERATOR)
+	DESCRIPTOR = OpDescriptor(r"\|", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.OPERATOR)
 
 	def __init__(self, selfToken, *args):
 		lamda = lambda a, b: a if a.val > b.val else b
@@ -25,7 +25,7 @@ class OR(OPERATOR):
 
 class NOT(OPERATOR):
 
-	DESCRIPTOR = Descriptor(r"\!", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.UNARY_OP)
+	DESCRIPTOR = OpDescriptor(r"\!", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.UNARY_OP)
 
 	def __init__(self, selfToken, arg):
 		super(NOT, self).__init__(lambda a, b: None, selfToken, arg)
