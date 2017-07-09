@@ -8,11 +8,13 @@ class OPERATOR(object):
 	DESCRIPTOR = None
 
 	@classmethod
-	def register(clas, tokenStore):
+	def register(clas, tokenStore, statsCollector=None):
 		OPERATOR.registerStatic(clas, tokenStore)		
 
 	@staticmethod
-	def registerStatic(clas, tokenStore):
+	def registerStatic(clas, tokenStore, statsCollector=None):
+		clas.StatsCollector = statsCollector
+
 		if isinstance(clas.DESCRIPTOR, list):
 			map(lambda d: d.setClass(clas), clas.DESCRIPTOR)
 			tokenStore += clas.DESCRIPTOR
