@@ -39,7 +39,12 @@ def preprocessRuleText(text):
 def tokenPreprocessor(token, label):
 	return token
 
+# According to the API, This should return all
+# the delimitation characters possible as a list
 def simpleSpaceDelimiter(text):
+	if text is None:
+		return [" "]
+
 	return text.split()
 
 def rawTokenStream(rule, tokenProcessor=tokenPreprocessor):

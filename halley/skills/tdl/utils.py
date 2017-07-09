@@ -44,6 +44,23 @@ class Token(PropMap):
 			precedence=tokenRule.precedence
 		)
 
+class StatsCollector(PropMap):
+	
+	def __init__(self):
+		self._words, self._trues = 0, 0
+
+	def inc(self, by=1):
+		self._words += 1
+
+	def wordInc(self, by=1):
+		self._trues += 1
+
+	def getRating(self):
+		return self._trues/float(self._words)
+
+	words = property(lambda self: self._words)
+	trues = property(lambda self: self._trues)
+
 class Pipeline(object):
 
 	def __init__(self, actions=[]):

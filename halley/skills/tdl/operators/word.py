@@ -7,7 +7,7 @@ from halley.skills.tdl.operator import OPERATOR, OpDescriptor, Result
 # '?' here isn't a operator
 class WORD:
 
-	DELIMITED_WORD_STARTS_WITH = "?"
+	NON_DELIMITED_WORD_STARTS_WITH = "?"
 	DESCRIPTOR = [
 		OpDescriptor(r"[\?]?\'[0-9A-Za-z ]+\'", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.WORD),
 		OpDescriptor(r'[\?]?\"[0-9A-Za-z ]+\"', Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.WORD),
@@ -22,13 +22,17 @@ class WORD:
 		self.label = Constants.TOKEN_TYPES.WORD
 		self._word = word
 
-		self._delimited = self._word.startswith(WORD.DELIMITED_WORD_STARTS_WITH)
+		self._delimited = not self._word.startswith(WORD.NON_DELIMITED_WORD_STARTS_WITH)
 		self._delimiter = wordDelimiterFunc
 
-		if self._delimited:
+		if not self._delimited:
 			self._word = self._word[1:]
 
 		self._word = self.sanitise(self._word)
+
+		# If the _word contains a space, Its automatically delimited
+		if any(map(lambda l: self._word.find(l) != -1, wordDelimiterFunc(None))):
+			self._delimited = False
 
 	def count(self, text):
 		text = self._delimiter(text) if self._delimited else text
