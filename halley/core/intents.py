@@ -45,10 +45,12 @@ class IntentManager(object):
 		if not isinstance(action, str):
 			action = action.action
 
+		returns = []
 		for subscriber in self.resolveIntentTargets(action):
-			subscriber.do(self.context, action, *args, **kargs)
+			returns += [subscriber.do(self.context, action, *args, **kargs)]
 
 		self.addToHistory(action)
+		return returns
 
 	def addToHistory(self, intent):
 		self._history.append((intent, time.time()))
