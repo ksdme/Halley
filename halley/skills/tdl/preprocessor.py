@@ -36,6 +36,8 @@ class Preprocessor(object):
 
 	def delimiter(self, ruleText):
 		"""
+			delimits a multi word
+			sentence
 		"""
 
 		# default delim
@@ -46,6 +48,9 @@ class Preprocessor(object):
 
 	def acceptable(self, char):
 		"""
+			checks for if a giveb char
+			is acceptable and is not a
+			special character
 		"""
 
 		return char in [" ", "\t", "\n"]
