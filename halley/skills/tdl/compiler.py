@@ -1,149 +1,201 @@
 # Halley's Skill Plugin API
 # @author Kilari Teja
-
 from halley.skills.tdl.utils import *
 from halley.skills.exception import *
-from halley.skills.tdl.operator import OpDescriptor
-
-# Don't need it as of now!
-# from halley.skills.tdl.preprocessor import *
-# from halley.skills.tdl.preprocessors.spread import SPREAD
-
 from halley.skills.tdl.operators.word import WORD
-from halley.skills.tdl.operators.boolean import NOT, AND, OR
-from halley.skills.tdl.operators.count import COUNT_OCCOURANCE
-from halley.skills.tdl.operators.ordering import PRE_OCCOURANCE, POST_OCCOURANCE
+from halley.skills.tdl.operator import OpDescriptor
+from halley.skills.tdl.preprocessor import Preprocessor
 
-import re
+class RuleCompiler(object):
+	"""
+		the default rule compiler class
+		glues together many processes
+	"""
 
-# Register your operator to this list, 
-# Preferably append its descriptor here
-VALID_INDENTERS = [" ", "\t", "\n"]
-TOKEN_RULES = [
-	OpDescriptor(r"\(", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.PARTH_OPEN),	# (
-	OpDescriptor(r"\)", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.PARTH_CLSE),	# )
-]
+	def init(self):
 
-OR.register(TOKEN_RULES)
-NOT.register(TOKEN_RULES)
-AND.register(TOKEN_RULES)
-WORD.register(TOKEN_RULES)
-PRE_OCCOURANCE.register(TOKEN_RULES)
-POST_OCCOURANCE.register(TOKEN_RULES)
-COUNT_OCCOURANCE.register(TOKEN_RULES)
+		self.token_rules = [
+			OpDescriptor(r"\(", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.PARTH_OPEN), # (
+			OpDescriptor(r"\)", Constants.PRECEDENCE.LOW, Constants.TOKEN_TYPES.PARTH_CLSE), # )
+		]
 
-# Preprocessors
-def preprocessRuleText(text):
-	return text.lower()
+	def __init__(self, ops=[], preprocessor=None):
+		
+		# init self
+		self.init()
 
-def tokenPreprocessor(token, label):
-	return token
+		# list of ops to reg
+		self.registerOps(ops)
 
-# According to the API, This should return all
-# the delimitation characters possible as a list
-def simpleSpaceDelimiter(text):
-	if text is None:
-		return [" "]
-
-	return text.split()
-
-def rawTokenStream(rule, tokenProcessor=tokenPreprocessor):
-	while rule != "":
-		for tokenRule in TOKEN_RULES:
-			match = re.match(tokenRule.regex, rule)
-			if match is not None:
-				matchSpan = match.span()
-
-				token = rule[:matchSpan[1]]
-				token = tokenProcessor(token, tokenRule.label)
-
-				yield Token(token, tokenRule)
-				rule = rule[matchSpan[1]:]
-				break
+		# resolve the preopr
+		if preprocessor is None:
+			self.preprocessor = Preprocessor()
 		else:
-			if rule[0] in VALID_INDENTERS:
-				rule = rule[1:]
-			else:
-				raise RuleCompilation(Messages.UNIDENTIFIED_SYM)
-	else:
-		raise StopIteration
+			assert isinstance(preprocessor, Preprocessor)
+			self.preprocessor = preprocessor
 
-def tokeniseRule(rule, tokenProcessor=tokenPreprocessor):
-	rawTokens = list(rawTokenStream(rule, tokenProcessor))
-	return rawTokens
+	def registerOp(self, op):
+		op.register(self.token_rules)
 
-# Clas is only used after the Postfixing Stage
-def makePostfix(rule):
-	assert isinstance(rule, list)
+	def registerOps(self, ops):
+		for op in ops: self.registerOp(op)
 
-	symbolStack, postfixStack = [], []
-	for symbol in rule:
-		symbolType = symbol.label
+	def rawTokenStream(self, rule):
+		"""
+			transforms a given rule text into
+			a stream of tokens, refernces self
+			.token_stream to extract patterns
 
-		if symbolType == Constants.TOKEN_TYPES.WORD:
-			postfixStack.append(symbol)
-		elif symbolType == Constants.TOKEN_TYPES.PARTH_OPEN:
-			symbolStack.append(symbol)
-		elif symbolType == Constants.TOKEN_TYPES.PARTH_CLSE:
-			for _ in xrange(len(symbolStack)):
-				symbol = symbolStack.pop(-1)
-				if symbol.label == Constants.TOKEN_TYPES.PARTH_OPEN: break
-				postfixStack.append(symbol)
-			else:
-				raise RuleLanguage(Messages.BAD_RULE)
+			:param rule: rule as a string
+			:return: token generator
+		"""
 
-		elif symbolType in [Constants.TOKEN_TYPES.OPERATOR, Constants.TOKEN_TYPES.UNARY_OP]:
-			while len(symbolStack) > 0 and symbolStack[-1] != Constants.PARTH_OPEN_SYM:
-				if symbolStack[-1].precedence > symbol.precedence:
-					postfixStack.append(symbolStack.pop())
-				else:
+		while rule != "":
+			for tokenRule in self.token_rules:
+				match = re.match(tokenRule.regex, rule)
+				if match is not None:
+					matchSpan = match.span()
+
+					token = rule[:matchSpan[1]]
+					token = self.preprocessor.token(token, tokenRule.label)
+
+					yield Token(token, tokenRule)
+					rule = rule[matchSpan[1]:]
 					break
+			else:
+				if self.preprocessor.acceptable(rule[0]):
+					rule = rule[1:]
+				else:
+					raise RuleCompilation(Messages.UNIDENTIFIED_SYM)
+		else:
+			raise StopIteration
 
-			symbolStack.append(symbol)
+	def tokeniseRule(self, rule):
+		"""
+			transforms a text rule into
+			a list of tokens as opposed
+			to a stream of tokens
 
-	# Count PARTH_OPEN
-	for symbol in symbolStack:
-		if symbol.label == Constants.TOKEN_TYPES.PARTH_OPEN:
-			raise RuleLanguage(Messages.MISSING_PARTH_CLSE)
+			:param rule: rule as a string
+			:return: list of tokens
+			:rtype: list
+		"""
 
-	postfixStack.extend(reversed(symbolStack))
-	return postfixStack
+		return list(self.rawTokenStream(rule))
 
-def defaultCompilerFunc(postfixStack, wordDelimiterFunc):
-	evaluationStack = []
-	while postfixStack != []:
-		element = postfixStack.pop(0)
-		if element.label in Constants.TOKEN_TYPES.WORD:
-			if element.label == Constants.TOKEN_TYPES.WORD:
-				element = WORD(wordDelimiterFunc, element.token)
+	def makePostfix(self, rule):
+		"""
+			transforms a token rule
+			(list) into a postfix stack
 
-			evaluationStack.append(element)
-		
-		# Binary Operator
-		elif element.label == Constants.TOKEN_TYPES.OPERATOR:
-			assert len(evaluationStack) > 1, RuleCompilation(Messages.BAD_COMPOUND_EXPR)
+			:param rule: tokd rule
+			:return: postfix stack
+			:rtype: list
+		"""
 
-			evaluationStack.append(
-				element.clas(element, *(evaluationStack.pop(), evaluationStack.pop())))
-		
-		# Unary Operator
-		elif element.label == Constants.TOKEN_TYPES.UNARY_OP:
-			assert len(evaluationStack) > 0, RuleCompilation(Messages.BAD_COMPOUND_EXPR)
+		assert isinstance(rule, list)
+		symbolStack, postfixStack = [], []
+		for symbol in rule:
+			symbolType = symbol.label
 
-			evaluationStack.append(
-				element.clas(element, evaluationStack.pop()))
+			if symbolType == Constants.TOKEN_TYPES.WORD:
+				postfixStack.append(symbol)
+			elif symbolType == Constants.TOKEN_TYPES.PARTH_OPEN:
+				symbolStack.append(symbol)
+			elif symbolType == Constants.TOKEN_TYPES.PARTH_CLSE:
+				for _ in xrange(len(symbolStack)):
+					symbol = symbolStack.pop(-1)
+					if symbol.label == Constants.TOKEN_TYPES.PARTH_OPEN: break
+					postfixStack.append(symbol)
+				else:
+					raise RuleLanguage(Messages.BAD_RULE)
+
+			elif symbolType in [Constants.TOKEN_TYPES.OPERATOR, Constants.TOKEN_TYPES.UNARY_OP]:
+				while len(symbolStack) > 0 and symbolStack[-1] != Constants.PARTH_OPEN_SYM:
+					if symbolStack[-1].precedence > symbol.precedence:
+						postfixStack.append(symbolStack.pop())
+					else:
+						break
+
+				symbolStack.append(symbol)
+
+		for symbol in symbolStack:
+			if symbol.label == Constants.TOKEN_TYPES.PARTH_OPEN:
+				raise RuleLanguage(Messages.MISSING_PARTH_CLSE)
+
+		postfixStack.extend(reversed(symbolStack))
+		return postfixStack
+
+	def defaultCompiler(self, postfixStack):
+		"""
+			the default compiler method,
+			transforms a postfix stack
+			into nested operator wrappers
+
+			:param postfixStack: rule as a postfix stack
+			:return: nested operator object
+			:rtype: OPERATOR
+		"""
+
+		evaluationStack = []
+		while postfixStack != []:
+			element = postfixStack.pop(0)
+			if element.label in Constants.TOKEN_TYPES.WORD:
+				if element.label == Constants.TOKEN_TYPES.WORD:
+					element = WORD(self.preprocessor.delimiter, element.token)
+
+				evaluationStack.append(element)
 			
-	assert len(evaluationStack) == 1, RuleCompilation(Messages.COMPILATION_ERROR)
-	return evaluationStack[0]
+			# Binary Operator
+			elif element.label == Constants.TOKEN_TYPES.OPERATOR:
+				assert len(evaluationStack) > 1, RuleCompilation(Messages.BAD_COMPOUND_EXPR)
 
-def ruleCompiler(rule, compiler=defaultCompilerFunc, requiresPostfixExpr=True, defaultDelimiterFunc=simpleSpaceDelimiter):
-	if isinstance(rule, str):
-		# pipeline = PreprocessorPipeline()
-		# SPREAD.register(pipeline, spreadMap)
-		# rule = pipeline.do(rule)
-		rule = tokeniseRule(rule)
-	
-	if requiresPostfixExpr:
-		rule = makePostfix(rule)
-	
-	return compiler(rule, defaultDelimiterFunc)
+				evaluationStack.append(
+					element.clas(element, *(evaluationStack.pop(), evaluationStack.pop())))
+			
+			# Unary Operator
+			elif element.label == Constants.TOKEN_TYPES.UNARY_OP:
+				assert len(evaluationStack) > 0, RuleCompilation(Messages.BAD_COMPOUND_EXPR)
+
+				evaluationStack.append(
+					element.clas(element, evaluationStack.pop()))
+				
+		assert len(evaluationStack) == 1, RuleCompilation(Messages.COMPILATION_ERROR)
+		return evaluationStack[0]
+
+	def compile(self, rule):
+		"""
+			basically this just wraps intermediate
+			transformation of rule to postfixStack
+			and then to a compiled object
+
+			:param rule: rule as text
+			:return: OPERATOR object
+			:rtype: OPERATOR
+		"""
+		assert isinstance(rule, str)
+		
+		rule = self.makePostfix(self.tokeniseRule(rule))
+		return self.defaultCompiler(rule)
+
+class DefaultRuleCompiler(RuleCompiler):
+	"""
+		a special RuleCompiler that has
+		basic operator support built in
+		though it can always be expanded
+		usng registerOp()
+	"""
+
+	def __init__(self, *args, **kargs):
+
+		# get all default ops
+		from halley.skills.tdl.operators.boolean import NOT, AND, OR
+		from halley.skills.tdl.operators.count import COUNT_OCCOURANCE
+		from halley.skills.tdl.operators.ordering import PRE_OCCOURANCE, POST_OCCOURANCE
+
+		ops = [
+			WORD, NOT, AND, OR, COUNT_OCCOURANCE,
+			PRE_OCCOURANCE, POST_OCCOURANCE
+		]
+
+		super(DefaultRuleCompiler, self).__init__(*args, ops=ops, **kargs)

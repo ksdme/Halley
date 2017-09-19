@@ -1,47 +1,51 @@
-from halley.skills.tdl.utils import Pipeline, PropMap
+"""
+	@author ksdme
+	provides a basic preprocessor
+	for rules and tokens
+"""
+import re
 
 class Preprocessor(object):
-	CONSUMES_RAW 			= 3
-	CONSUMES_TOKEN_STREAM 	= 4
+	"""
+		provides default set of
+		rule preprocessors
+	"""
 
-	DESCRIPTOR = None
+	def rule(self, ruleText):
+		"""
+			responsible for preprocessing
+			a given rule before it is tokenised
 
-	@classmethod
-	def register(clas, pipeline, argslambda):
-		pipeline.add(clas, clas.DESCRIPTOR.consumesType, argslambda)
+			:param ruleText: the raw rule as string
+			:return: returns the processed rule text
+			:rtype: string
+		"""
 
-	@staticmethod
-	def registerStatic(clas, pipeline, argslambda):
-		clas.register(clas, pipeline, argslambda)
+		return ruleText.lower().strip()
 
-	@staticmethod
-	def act(data):
-		raise NotImplementedError()
+	def token(self, token, label):
+		"""
+			token units preprocessor
+			
+			:param token: token unit
+			:return: processed token
+			:rtype: string
+		"""
 
-class PrepDescriptor(PropMap):
+		return token
 
-	def __init__(self, consumesType):
-		super(PrepDescriptor, self).__init__(
-			consumesType=consumesType)
+	def delimiter(self, ruleText):
+		"""
+		"""
 
-class PreprocessorPipeline:
+		# default delim
+		if ruleText is None:
+			return [" "]
 
-	def __init__(self, tokeniser):
-		self._when_raw_code = Pipeline()
-		self._post_tokenise = Pipeline()
+		return ruleText.split()
 
-		self._post_tokenise.addAction(tokeniser)
+	def acceptable(self, char):
+		"""
+		"""
 
-	def __call__(self, data):
-		return self.do(data)
-
-	def do(self, data):
-		return self._post_tokenise.do(self._when_raw_code.do(data))
-
-	def add(self, clas, consumesType, argslambda):
-		lamda = (lambda data, args: clas.act(data, args), argslambda)
-		
-		if consumesType == Preprocessor.CONSUMES_RAW:
-			self._when_raw_code.addAction(lamda)
-		elif consumesType == Preprocessor.CONSUMES_TOKEN_STREAM:
-			self._post_tokenise.addAction(lamda)
+		return char in [" ", "\t", "\n"]
